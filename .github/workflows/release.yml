@@ -3,34 +3,46 @@ name: Release
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag of an existing published release (for example, 0.1.0 or v0.1.0)'
+        type: string
+        required: true
 
 permissions:
   contents: write
+
+env:
+  RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
 
 jobs:
   release:
     runs-on: windows-2025
     steps:
-      - name: Check out the published release tag
+      - name: Check out the release tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name }}
-      - name: Validate release tag and license
+          ref: ${{ env.RELEASE_TAG }}
+      - name: Validate version, license and existing published release
         shell: pwsh
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if ($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+$') {
-            throw "Release tag must match vMAJOR.MINOR.PATCH: '$env:RELEASE_TAG'."
+          if ($env:RELEASE_TAG -notmatch '^v?(\d+\.\d+\.\d+)$') {
+            throw "Release tag must match MAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH: '$env:RELEASE_TAG'."
           }
+          $version = $Matches[1]
+          "VERSION=$version" >> $env:GITHUB_ENV
           if (-not (Test-Path -LiteralPath 'LICENSE' -PathType Leaf)) {
             throw 'The MIT LICENSE file is required for a public release.'
           }
-      - name: Compile and package published release (latest stable AutoIt)
+          $draft = gh release view "$env:RELEASE_TAG" --json isDraft --jq '.isDraft'
+          if ($LASTEXITCODE -ne 0) { throw "Published GitHub Release not found for tag '$env:RELEASE_TAG'." }
+          if ($draft.Trim() -ne 'false') { throw "Release '$env:RELEASE_TAG' is still a draft." }
+      - name: Compile and package release (latest stable AutoIt)
         shell: pwsh
-        env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: .\scripts\Build.ps1 -Package -Tag "$env:RELEASE_TAG"
+        run: .\scripts\Build.ps1 -Package -Tag "v$env:VERSION"
       - name: Upload build diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -43,10 +55,8 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          $version = $env:RELEASE_TAG.Substring(1)
-          $archive = ".\dist\KeePassXCHelloFocus-$version.zip"
+          $archive = ".\dist\KeePassXCHelloFocus-$env:VERSION.zip"
           $checksum = "$archive.sha256"
           foreach ($file in @($archive, $checksum)) {
             if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
@@ -57,5 +67,5 @@ jobs:
           $expectedLine = "$hash  $([System.IO.Path]::GetFileName($archive))"
           $actualLine = [System.IO.File]::ReadAllText((Resolve-Path -LiteralPath $checksum).Path).Trim()
           if ($actualLine -cne $expectedLine) { throw 'Release ZIP SHA-256 verification failed.' }
-          gh release upload "$env:RELEASE_TAG" "$archive" "$checksum"
+          gh release upload "$env:RELEASE_TAG" "$archive" "$checksum" --clobber
           if ($LASTEXITCODE -ne 0) { throw "GitHub Release asset upload failed ($LASTEXITCODE)." }

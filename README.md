@@ -45,7 +45,7 @@ Build validation checks executable version metadata and the embedded fingerprint
 
 For a testable build without publishing a Release, open **Actions > Build > Run workflow**. After the run succeeds, download **two separate files** under **Artifacts**: `KeePassXCHelloFocus-X.Y.Z.zip` and `KeePassXCHelloFocus-X.Y.Z.zip.sha256`. Neither download has an extra ZIP wrapper. Builds also run on pushes to `main` and pull requests; artifacts are retained for 14 days.
 
-To create a public download, create a draft Release with a version tag (for example, `v0.1.0`) and then click **Publish release**. The `Release` workflow builds the tagged source, computes SHA-256 **after** creating the final ZIP, verifies the checksum, and attaches **both files** to that Release. Saving a draft does not trigger compilation. See the [build and release guide](docs/BUILD.md).
+To create a public download, create a draft Release with a version tag (for example, `0.1.0` or `v0.1.0`) and then click **Publish release**. The `Release` workflow builds the tagged source, computes SHA-256 **after** creating the final ZIP, verifies the checksum, and attaches **both files** to that Release. Saving a draft does not trigger compilation. For an existing published Release whose build failed, use **Actions > Release > Run workflow** with its original tag, without deleting the Release. See the [build and release guide](docs/BUILD.md).
 
 ## Download verification and Windows SmartScreen
 

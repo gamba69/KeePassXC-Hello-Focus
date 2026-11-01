@@ -74,17 +74,17 @@ Test builds **do not create or modify GitHub Releases**. Build artifacts are ret
 
 ### Published releases (`Release` workflow)
 
-`.github/workflows/release.yml` is triggered by the GitHub **Release `published`** event, not by pushing a Git tag. A draft Release does not start this workflow.
+`.github/workflows/release.yml` runs when a GitHub Release is **published**. It can also be started manually from **Actions > Release > Run workflow** for an already published Release. A draft Release does not start this workflow.
 
 When you click **Publish release**, the workflow:
 
 1. Checks out the selected release **tag**, not the current `main` HEAD.
-2. Verifies that the tag has the form `vMAJOR.MINOR.PATCH` and that `LICENSE` is present.
+2. Accepts either `MAJOR.MINOR.PATCH` or `vMAJOR.MINOR.PATCH`; verifies that `LICENSE` is present and the Release exists and is published.
 3. Downloads the latest stable AutoIt and compiles the program from the tagged source.
 4. Checks that the tag matches the AutoIt source version and that the compiled EXE has the required version and fingerprint icon.
 5. Creates `dist/KeePassXCHelloFocus-X.Y.Z.zip`, computes and verifies `dist/KeePassXCHelloFocus-X.Y.Z.zip.sha256`, and **attaches both files to the Release that was just published** using `gh release upload`.
 
-The workflow does **not** create a second Release, overwrite release notes, or edit the title. It does not replace an existing asset with the same filename; if you already uploaded such a file, remove it before publication or the upload step will fail.
+The workflow does **not** create a second Release, overwrite release notes, or edit the title. When re-run, it replaces its existing ZIP and checksum assets with the newly verified files (`gh release upload --clobber`).
 
 The Release becomes public immediately when published, while compilation and uploading happen afterward. The ZIP and `.zip.sha256` file will appear under **Assets** once the workflow succeeds. Check **Actions > Release** if either file is missing.
 
@@ -95,13 +95,13 @@ The Release becomes public immediately when published, while compilation and upl
 1. Commit the complete project to the default branch (`main`) and push it to GitHub.
 2. Open **Actions > Build > Run workflow**. Download and test the ZIP from the successful run's **Artifacts** section.
 3. Open **Releases > Draft a new release** (or edit an existing draft).
-4. Choose or create tag `v0.1.0` pointing to the tested commit. Set the release title and description.
+4. Choose or create tag `0.1.0` (or `v0.1.0`) pointing to the tested commit. Set the release title and description.
 5. Click **Publish release**. This triggers the `Release` workflow.
 6. Open **Actions > Release** to confirm success, then check that the Release contains `KeePassXCHelloFocus-0.1.0.zip` **and** `KeePassXCHelloFocus-0.1.0.zip.sha256` under **Assets** (or the matching version for another release).
 
-If the tag uses another version (for example, `v0.1.1`), update both `FileVersion` and `ProductVersion` pragmas in the `.au3` source to `0.1.1.0` before tagging. Also update the changelog and the version shown in README.
+If the tag uses another version (for example, `0.1.1`), update both `FileVersion` and `ProductVersion` pragmas in the `.au3` source to `0.1.1.0` before tagging. Also update the changelog and the version shown in README.
 
-If a Release was already published *before* the new workflow was committed to the default branch, this event cannot be retroactively triggered by saving its draft or editing the text. For future releases, use the workflow above.
+To build assets for an **already published Release** (including a Release whose first build failed), commit the updated workflow to `main`, then open **Actions > Release > Run workflow**. Select branch `main`, enter the exact existing release tag (such as `0.1.0`), and run it. The workflow checks out that tag, verifies its application version, and uploads ZIP plus SHA-256 to the **existing** Release. Do not delete or republish the Release. A normal workflow **Re-run jobs** on the old failing run uses its original workflow revision, so use the new manual dispatch instead.
 
 ## SHA-256 release integrity
 

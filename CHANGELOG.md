@@ -24,6 +24,7 @@ This project uses `MAJOR.MINOR.PATCH` release versions. The executable stores th
 - Package the flat `dist/` file set directly, without a temporary staging directory; `Compile.cmd` now creates the ZIP by default.
 
 ### Fixed
+- Accept release tags with or without a `v` prefix and allow manual recovery of failed published Release asset builds without recreating the Release.
 - Removed conflicting `#pragma compile(Out, ...)` and `#pragma compile(Icon, ...)` directives; the build now exclusively controls the output path and executable icon with Aut2Exe command-line switches.
 - Added a build-time guard against reintroducing these conflicting directives, and a diagnostic if an obsolete executable is found in the repository root.
 - Corrected three invalid AutoIt line continuations in About window theme API calls (Au3Check errors at 404, 418, and 426).
