@@ -1,25 +1,36 @@
 name: Release
+
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [published]
+
 permissions:
   contents: write
+
 jobs:
   release:
     runs-on: windows-2025
     steps:
-      - name: Check out tag
+      - name: Check out the published release tag
         uses: actions/checkout@v4
-      - name: Verify publishing prerequisites
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - name: Validate release tag and license
         shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          if (-not (Test-Path LICENSE)) {
-            throw 'A LICENSE file must be selected and added before a public release.'
+          if ($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+$') {
+            throw "Release tag must match vMAJOR.MINOR.PATCH: '$env:RELEASE_TAG'."
           }
-      - name: Compile and validate tagged build (download latest stable AutoIt)
+          if (-not (Test-Path -LiteralPath 'LICENSE' -PathType Leaf)) {
+            throw 'The MIT LICENSE file is required for a public release.'
+          }
+      - name: Compile and package published release (latest stable AutoIt)
         shell: pwsh
-        run: .\scripts\Build.ps1 -Package -Tag "$env:GITHUB_REF_NAME"
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: .\scripts\Build.ps1 -Package -Tag "$env:RELEASE_TAG"
       - name: Upload build diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -27,9 +38,11 @@ jobs:
           name: build-diagnostics
           path: .build/logs/*.log
           if-no-files-found: ignore
-      - name: Publish ZIP on GitHub Releases
+          retention-days: 7
+      - name: Attach ZIP to existing GitHub Release
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          gh release create "$env:GITHUB_REF_NAME" ".\dist\KeePassXCHelloFocus.zip" --verify-tag --generate-notes --title "$env:GITHUB_REF_NAME"
+          gh release upload "$env:RELEASE_TAG" '.\dist\KeePassXCHelloFocus.zip'

@@ -111,6 +111,8 @@ Windows theme-change messages are handled by setting a flag and applying the UI 
 - `#pragma compile(FileVersion, ...)` is the authoritative version declaration; runtime About reads it from the compiled EXE.
 - Each build downloads and verifies a fresh copy of the latest stable portable AutoIt from the official rolling URL; installed and cached compilers are never used. Compilation uses explicit `/icon`, `/x64`, and `/nopack` arguments.
 - A mismatched tag fails the release build instead of publishing inconsistent artifacts.
+- CI and manual builds upload testable ZIP artifacts without publishing a GitHub Release.
+- Publishing a GitHub Release triggers a separate build from the release tag and attaches the generated ZIP to that existing release. Draft releases do not initiate builds.
 - Release packaging always contains the standalone EXE, README, and MIT `LICENSE`.
 - Publishing must be blocked if the MIT `LICENSE` file is missing.
 

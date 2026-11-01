@@ -1,11 +1,14 @@
 name: Build
+
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
   build:
     runs-on: windows-2025
@@ -22,9 +25,16 @@ jobs:
           name: build-diagnostics
           path: .build/logs/*.log
           if-no-files-found: ignore
-      - name: Upload build artifact
+          retention-days: 7
+      - name: Upload testable ZIP
         uses: actions/upload-artifact@v4
         with:
           name: KeePassXCHelloFocus
           path: dist/KeePassXCHelloFocus.zip
           if-no-files-found: error
+          retention-days: 14
+      - name: Explain where to download the build
+        shell: pwsh
+        run: |
+          'Build completed. Download the KeePassXCHelloFocus artifact from this run (Actions > Build > run > Artifacts).' >> $env:GITHUB_STEP_SUMMARY
+          'The artifact contains KeePassXCHelloFocus.zip with the EXE, README.md and LICENSE.' >> $env:GITHUB_STEP_SUMMARY

@@ -6,6 +6,9 @@
 *.a3x
 *.obj
 *.log
+# Local Git patches
+*.patch
+
 # Local editor settings
 .vs/
 .vscode/

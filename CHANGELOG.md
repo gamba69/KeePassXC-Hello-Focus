@@ -5,6 +5,9 @@ This project uses `MAJOR.MINOR.PATCH` release versions. The executable stores th
 ## Unreleased
 
 ### Changed
+- Publish test-build ZIPs as GitHub Actions artifacts on push, pull requests, and manual `Run workflow` (14-day retention).
+- Build and attach the distribution ZIP to an existing GitHub Release when it is **published**, instead of creating a release on tag push.
+- Document how to test builds before publishing and where to find successful ZIPs and failure logs.
 - License the project-owned source code and documentation under MIT; add the root `LICENSE` file to every distribution and remove the release license blocker.
 - Always download and verify the latest stable portable AutoIt **on every build**, even when AutoIt is installed or a previous portable download exists.
 - Never use `AUT2EXE_PATH`, installed tools, or an earlier cached compiler; fail the build if a fresh download is unavailable.

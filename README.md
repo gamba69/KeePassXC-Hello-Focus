@@ -40,6 +40,12 @@ The downloaded AutoIt runtime's Authenticode signature is verified before compil
 
 Build validation checks executable version metadata and the embedded fingerprint icon. The compiler receives explicit `/out`, `/icon`, `/x64`, and `/nopack` options. Output placement and executable icon are controlled by the build script, not duplicated with `#pragma compile(Out, ...)` or `#pragma compile(Icon, ...)`. The locally downloaded `.tools/` folder is not committed to Git.
 
+## GitHub Actions builds
+
+For a testable build without publishing a Release, open **Actions > Build > Run workflow**. After the run succeeds, download `KeePassXCHelloFocus` under **Artifacts**; it contains the distribution ZIP. Builds also run on pushes to `main` and pull requests. Build artifacts are retained for 14 days.
+
+To create a public download, create a draft Release with a version tag (for example, `v0.1.0`) and then click **Publish release**. The separate `Release` workflow builds the tagged source and attaches `KeePassXCHelloFocus.zip` to that existing Release. Saving a draft does not trigger compilation; the ZIP appears under **Assets** after the published-release workflow finishes successfully. See the [build and release guide](docs/BUILD.md).
+
 ## Limitations
 
 - The utility recognizes a specific Windows credential dialog window class. Other authentication dialogs may not be detected.

@@ -35,3 +35,11 @@ Use Windows 10 and Windows 11 where possible. Test the actual built EXE, not onl
 - With the official download unavailable, confirm that the build fails rather than using installed or previously downloaded AutoIt.
 - Confirm the downloaded package is validated before replacing `.tools/AutoIt/current/`, and that download staging files are removed.
 - Confirm the printed compiler version corresponds to the freshly downloaded package.
+
+## GitHub Actions acceptance tests
+
+- Push a change to `main`; confirm the `Build` workflow runs and uploads a `KeePassXCHelloFocus` artifact containing the release ZIP.
+- Manually use **Actions > Build > Run workflow**; confirm it produces the same artifact without creating a GitHub Release.
+- Create and save a draft Release; confirm that no `Release` workflow starts yet.
+- Publish a Release with a tag matching the source version. Confirm that the `Release` workflow builds the tagged commit and adds `KeePassXCHelloFocus.zip` to the existing Release's Assets without replacing its title or notes.
+- Confirm that a failed build uploads diagnostics under `.build/logs/` but does not upload a misleading successful distribution archive.
