@@ -4,6 +4,13 @@ This project uses `MAJOR.MINOR.PATCH` release versions. The executable stores th
 
 ## Unreleased
 
+## [0.1.1] - 2026-11-01
+
+### Fixed
+- Rework immutable GitHub Releases: manually build and upload ZIP plus SHA-256 to a **Draft Release** before publication, never after. Refuse uploads to published releases; the user publishes manually.
+- Verify both release assets are present in the draft before declaring success, and prevent concurrent uploads for the same tag.
+- Bump the executable and package version from 0.1.0 to 0.1.1. The `0.1.0` release cannot be recreated under an immutable previously used tag.
+
 ### Changed
 - Publish a `.zip.sha256` checksum next to the final versioned ZIP in local `dist/`, GitHub Actions Artifacts, and GitHub Releases; verify the checksum before CI publication.
 - Document SHA-256 download verification and Windows SmartScreen/Mark-of-the-Web behavior without disabling Windows security features.
@@ -11,7 +18,7 @@ This project uses `MAJOR.MINOR.PATCH` release versions. The executable stores th
 - Document public Authenticode signing options and the sign-before-package requirement; signing is not enabled until a verified identity is selected.
 - Name distribution ZIPs and GitHub Actions artifacts `KeePassXCHelloFocus-X.Y.Z` using the version already declared in the AutoIt source. Release assets retain the matching versioned filename.
 - Publish test-build ZIPs as GitHub Actions artifacts on push, pull requests, and manual `Run workflow` (14-day retention).
-- Build and attach the distribution ZIP to an existing GitHub Release when it is **published**, instead of creating a release on tag push.
+- Build and attach ZIP plus SHA-256 to an existing Draft Release on explicit manual request, before the user publishes it.
 - Document how to test builds before publishing and where to find successful ZIPs and failure logs.
 - License the project-owned source code and documentation under MIT; add the root `LICENSE` file to every distribution and remove the release license blocker.
 - Always download and verify the latest stable portable AutoIt **on every build**, even when AutoIt is installed or a previous portable download exists.
@@ -23,8 +30,8 @@ This project uses `MAJOR.MINOR.PATCH` release versions. The executable stores th
 - Move build diagnostics to `.build/logs/` and update GitHub Actions diagnostic artifact paths.
 - Package the flat `dist/` file set directly, without a temporary staging directory; `Compile.cmd` now creates the ZIP by default.
 
-### Fixed
-- Accept release tags with or without a `v` prefix and allow manual recovery of failed published Release asset builds without recreating the Release.
+### Other fixes
+- Accept release tags with or without a `v` prefix and allow manual retry of failed **draft** Release asset builds before publication.
 - Removed conflicting `#pragma compile(Out, ...)` and `#pragma compile(Icon, ...)` directives; the build now exclusively controls the output path and executable icon with Aut2Exe command-line switches.
 - Added a build-time guard against reintroducing these conflicting directives, and a diagnostic if an obsolete executable is found in the repository root.
 - Corrected three invalid AutoIt line continuations in About window theme API calls (Au3Check errors at 404, 418, and 426).

@@ -1,6 +1,6 @@
 # KeePassXC Hello Focus
 
-**Version 0.1.0** · Windows 10/11 · 64-bit · Portable
+**Version 0.1.1** · Windows 10/11 · 64-bit · Portable
 
 KeePassXC Hello Focus is a small, independent Windows tray utility that brings Windows Hello / Windows Security authentication prompts to the foreground when they appear behind other windows. Its primary use case is authentication prompts encountered while working with KeePassXC.
 
@@ -20,7 +20,7 @@ KeePassXC Hello Focus is a small, independent Windows tray utility that brings W
 ## Download and run
 
 1. Open the repository's **Releases** section once the first release is published.
-2. Download `KeePassXCHelloFocus-X.Y.Z.zip` (for example, `KeePassXCHelloFocus-0.1.0.zip`) and its matching `.zip.sha256` checksum file.
+2. Download `KeePassXCHelloFocus-X.Y.Z.zip` (for example, `KeePassXCHelloFocus-0.1.1.zip`) and its matching `.zip.sha256` checksum file.
 3. Verify the ZIP checksum (see [Download verification](#download-verification-and-windows-smartscreen)), then extract it.
 4. Run `KeePassXCHelloFocus.exe`.
 5. Right-click its tray icon to open **About...** or select **Exit**.
@@ -45,26 +45,26 @@ Build validation checks executable version metadata and the embedded fingerprint
 
 For a testable build without publishing a Release, open **Actions > Build > Run workflow**. After the run succeeds, download **two separate files** under **Artifacts**: `KeePassXCHelloFocus-X.Y.Z.zip` and `KeePassXCHelloFocus-X.Y.Z.zip.sha256`. Neither download has an extra ZIP wrapper. Builds also run on pushes to `main` and pull requests; artifacts are retained for 14 days.
 
-To create a public download, create a draft Release with a version tag (for example, `0.1.0` or `v0.1.0`) and then click **Publish release**. The `Release` workflow builds the tagged source, computes SHA-256 **after** creating the final ZIP, verifies the checksum, and attaches **both files** to that Release. Saving a draft does not trigger compilation. For an existing published Release whose build failed, use **Actions > Release > Run workflow** with its original tag, without deleting the Release. See the [build and release guide](docs/BUILD.md).
+To publish manually with **Immutable Releases** enabled, first push the tested source and a Git tag (`0.1.1` or `v0.1.1`). Create and **save a Draft Release** using that existing tag; do **not** publish it yet. Next, open **Actions > Release > Run workflow**, select `main`, and enter the exact draft tag. The workflow checks out that tag, builds the EXE, verifies the final ZIP's SHA-256, and uploads both files to the **draft**. After the run succeeds, verify both assets in the draft and click **Publish release** yourself. The workflow never publishes releases and never tries to modify published immutable releases. See the [build and release guide](docs/BUILD.md).
 
 ## Download verification and Windows SmartScreen
 
 Check the checksum before running a downloaded build. From PowerShell in the directory containing **both** downloaded files (replace `0.1.0` with your version):
 
 ```powershell
-$zip = '.\KeePassXCHelloFocus-0.1.0.zip'
+$zip = '.\KeePassXCHelloFocus-0.1.1.zip'
 $expected = ((Get-Content -LiteralPath "$zip.sha256" -Raw).Trim() -split '\s+')[0]
 $actual = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash
 if ($actual -ine $expected) { throw 'SHA-256 mismatch: do not run this download.' }
 'ZIP checksum verified.'
 ```
 
-On macOS/Linux, run `sha256sum -c KeePassXCHelloFocus-0.1.0.zip.sha256` where available. The checksum is a file integrity check, **not a digital signature**. A checksum hosted beside the download cannot independently prove who published it.
+On macOS/Linux, run `sha256sum -c KeePassXCHelloFocus-0.1.1.zip.sha256` where available. The checksum is a file integrity check, **not a digital signature**. A checksum hosted beside the download cannot independently prove who published it.
 
 Windows SmartScreen may warn about a newly downloaded, unsigned EXE because it has not yet established a reputation. This is not necessarily a malware finding, and checking a SHA-256 does **not** make the file trusted by SmartScreen. After confirming the source and checksum, if you choose to trust the download, Windows users can remove the Internet-origin mark from the **ZIP before extracting** it:
 
 ```powershell
-Unblock-File -LiteralPath '.\KeePassXCHelloFocus-0.1.0.zip'
+Unblock-File -LiteralPath '.\KeePassXCHelloFocus-0.1.1.zip'
 ```
 
 This affects only the selected local file, not other downloads or future versions; it does not disable SmartScreen globally or sign the application. Windows may still display a security warning depending on reputation and system policy. See [Security](docs/SECURITY.md) and [Code signing](docs/SIGNING.md).

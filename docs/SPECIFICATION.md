@@ -1,6 +1,6 @@
 # KeePassXC Hello Focus — Technical Specification
 
-**Specification version:** 0.1.0  
+**Specification version:** 0.1.1  
 **Target platform:** Windows 10/11, x64  
 **Language:** AutoIt v3 (latest stable when downloaded automatically)  
 **Distribution:** Portable standalone EXE
@@ -107,12 +107,12 @@ Windows theme-change messages are handled by setting a flag and applying the UI 
 - Product name in EXE metadata: `KeePassXC Hello Focus`.
 - Output name: `KeePassXCHelloFocus.exe` (no version suffix).
 - Release ZIP name: `KeePassXCHelloFocus-X.Y.Z.zip`, where `X.Y.Z` is the application version from `FileVersion`/`ProductVersion` (for example, `0.1.0`).
-- `FileVersion` and `ProductVersion`: `0.1.0.0` for tag `0.1.0` or `v0.1.0`.
+- `FileVersion` and `ProductVersion`: `0.1.1.0` for tag `0.1.1` or `v0.1.1`.
 - `#pragma compile(FileVersion, ...)` is the authoritative version declaration; runtime About reads it from the compiled EXE.
 - Each build downloads and verifies a fresh copy of the latest stable portable AutoIt from the official rolling URL; installed and cached compilers are never used. Compilation uses explicit `/icon`, `/x64`, and `/nopack` arguments.
 - A mismatched tag fails the release build instead of publishing inconsistent artifacts.
 - CI and manual builds upload testable ZIP artifacts without publishing a GitHub Release.
-- Publishing a GitHub Release triggers a separate build from its tag; manual dispatch can build assets for an existing published Release. Both attach ZIP and SHA-256 to that Release, accepting `X.Y.Z` and `vX.Y.Z` tags. Draft releases do not initiate builds.
+- Manual dispatch of the `Release` workflow builds source from an existing `X.Y.Z` or `vX.Y.Z` Git tag and uploads ZIP plus SHA-256 only to a matching **Draft Release**. The tag must be pushed before dispatch. A published immutable release cannot be modified; publishing never triggers the workflow.
 - Release packaging always contains the standalone EXE, README, and MIT `LICENSE`.
 - Publishing must be blocked if the MIT `LICENSE` file is missing.
 

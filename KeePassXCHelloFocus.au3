@@ -3,8 +3,8 @@
 #pragma compile(ProductName, KeePassXC Hello Focus)
 #pragma compile(InternalName, KeePassXCHelloFocus)
 #pragma compile(OriginalFilename, KeePassXCHelloFocus.exe)
-#pragma compile(FileVersion, 0.1.0.0)
-#pragma compile(ProductVersion, 0.1.0.0)
+#pragma compile(FileVersion, 0.1.1.0)
+#pragma compile(ProductVersion, 0.1.1.0)
 
 
 

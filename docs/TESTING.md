@@ -4,7 +4,7 @@ Use Windows 10 and Windows 11 where possible. Test the actual built EXE, not onl
 
 | ID | Procedure | Expected result |
 | --- | --- | --- |
-| T01 | Open the EXE's Properties > Details. | Product is KeePassXC Hello Focus; file/product versions are 0.1.0.0. |
+| T01 | Open the EXE's Properties > Details. | Product is KeePassXC Hello Focus; file/product versions are 0.1.1.0. |
 | T02 | Inspect the EXE icon at multiple Explorer display sizes. | White fingerprint, not the generic AutoIt/window icon. |
 | T03 | Launch the EXE and inspect the tray. | Exactly one recognizable fingerprint icon appears. |
 | T04 | Launch a second EXE or a renamed copy. | The new process exits silently and no second tray icon appears. |
@@ -40,6 +40,7 @@ Use Windows 10 and Windows 11 where possible. Test the actual built EXE, not onl
 
 - Push a change to `main`; confirm the `Build` workflow runs and uploads a `KeePassXCHelloFocus-X.Y.Z` artifact containing the matching versioned ZIP.
 - Manually use **Actions > Build > Run workflow**; confirm it produces the same artifact without creating a GitHub Release.
-- Create and save a draft Release; confirm that no `Release` workflow starts yet.
-- Publish a Release with a tag matching the source version. Confirm that the `Release` workflow builds the tagged commit and adds `KeePassXCHelloFocus-X.Y.Z.zip` to the existing Release's Assets without replacing its title or notes.
+- Push an `X.Y.Z` Git tag for the tested commit and save a Draft Release using that existing tag; confirm no workflow starts automatically.
+- Manually dispatch **Actions > Release > Run workflow** with the draft's tag; confirm it builds the tagged commit, verifies SHA-256, and uploads both ZIP and `.zip.sha256` to the draft, leaving title, notes, and draft status unchanged.
+- Verify the workflow rejects a published release instead of attempting an immutable asset upload. After both assets are present, publish the draft manually; confirm publication triggers no build and both assets remain available.
 - Confirm that a failed build uploads diagnostics under `.build/logs/` but does not upload a misleading successful distribution archive.

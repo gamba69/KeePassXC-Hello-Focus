@@ -72,36 +72,43 @@ After a **successful** run, open **Actions > Build > the completed run > Artifac
 
 Test builds **do not create or modify GitHub Releases**. Build artifacts are retained for 14 days. If compilation fails, the run is marked failed and available diagnostic logs are uploaded as the `build-diagnostics` artifact for 7 days. No successful build ZIP is generated on a failed run.
 
-### Published releases (`Release` workflow)
+### Draft release packaging (`Release` workflow)
 
-`.github/workflows/release.yml` runs when a GitHub Release is **published**. It can also be started manually from **Actions > Release > Run workflow** for an already published Release. A draft Release does not start this workflow.
+`.github/workflows/release.yml` runs **only** from **Actions > Release > Run workflow**. It does not run on `release: published`, tag pushes, or saving a draft. The user controls when a GitHub Release is published.
 
-When you click **Publish release**, the workflow:
+For repositories using **Immutable Releases**, every asset must be uploaded **before publication**. GitHub will reject uploads, replacements, and deletions after publishing. The workflow therefore accepts **only an existing Draft Release** and refuses to operate on an already published release. It also accepts either `X.Y.Z` or `vX.Y.Z` tags. The **Git tag must already exist on GitHub**, so the tagged commit can be checked out by Actions.
 
-1. Checks out the selected release **tag**, not the current `main` HEAD.
-2. Accepts either `MAJOR.MINOR.PATCH` or `vMAJOR.MINOR.PATCH`; verifies that `LICENSE` is present and the Release exists and is published.
-3. Downloads the latest stable AutoIt and compiles the program from the tagged source.
-4. Checks that the tag matches the AutoIt source version and that the compiled EXE has the required version and fingerprint icon.
-5. Creates `dist/KeePassXCHelloFocus-X.Y.Z.zip`, computes and verifies `dist/KeePassXCHelloFocus-X.Y.Z.zip.sha256`, and **attaches both files to the Release that was just published** using `gh release upload`.
+When started manually, the workflow:
 
-The workflow does **not** create a second Release, overwrite release notes, or edit the title. When re-run, it replaces its existing ZIP and checksum assets with the newly verified files (`gh release upload --clobber`).
+1. Checks out the source from the exact existing tag, **not** the current `main` HEAD.
+2. Verifies the tag format, the MIT `LICENSE`, and that a Draft Release exists for the supplied tag.
+3. Downloads the latest stable AutoIt, checks source syntax, compiles the EXE, and verifies its version and icon.
+4. Creates `dist/KeePassXCHelloFocus-X.Y.Z.zip` and `dist/KeePassXCHelloFocus-X.Y.Z.zip.sha256`, then checks the final ZIP hash.
+5. Checks that the release is **still a draft**, uploads both assets to the draft, and confirms that both are listed in the release.
 
-The Release becomes public immediately when published, while compilation and uploading happen afterward. The ZIP and `.zip.sha256` file will appear under **Assets** once the workflow succeeds. Check **Actions > Release** if either file is missing.
+The upload uses `--clobber` to allow a failed/incomplete draft upload to be retried **while the release is still a draft**. Its title, notes, and publication state are not changed. Two runs for the same tag cannot upload concurrently. If compilation fails, the workflow leaves the draft unpublished, so the problem can be fixed safely before publication.
 
-**Important:** GitHub requires the `release.yml` workflow to exist on the repository's default branch before a Release is published. Publish the updated source to `main` first. Workflow permissions must allow GitHub Actions to run; `release.yml` requests `contents: write` for uploading its asset.
+**Publishing is manual:** after the workflow succeeds, inspect the two assets on the draft page, then click **Publish release** yourself. Do not publish while the workflow is running. Once published, an immutable release cannot receive more assets—even via a manual rerun. If a published release is wrong or incomplete, use a **new version** and new draft, rather than attempting to repair it in place.
 
-## Publishing version 0.1.0
+**Important:** commit and push the corrected `release.yml` to the default branch (`main`) **before** starting the workflow. The manual `Run workflow` control uses the workflow on the selected branch (`main`); the checked-out application source comes from the chosen tag.
 
-1. Commit the complete project to the default branch (`main`) and push it to GitHub.
-2. Open **Actions > Build > Run workflow**. Download and test the ZIP from the successful run's **Artifacts** section.
-3. Open **Releases > Draft a new release** (or edit an existing draft).
-4. Choose or create tag `0.1.0` (or `v0.1.0`) pointing to the tested commit. Set the release title and description.
-5. Click **Publish release**. This triggers the `Release` workflow.
-6. Open **Actions > Release** to confirm success, then check that the Release contains `KeePassXCHelloFocus-0.1.0.zip` **and** `KeePassXCHelloFocus-0.1.0.zip.sha256` under **Assets** (or the matching version for another release).
+## Publishing version 0.1.1
 
-If the tag uses another version (for example, `0.1.1`), update both `FileVersion` and `ProductVersion` pragmas in the `.au3` source to `0.1.1.0` before tagging. Also update the changelog and the version shown in README.
+1. Apply this patch, commit it to `main`, and push. Confirm that the **Build** workflow succeeds. Download and test the ZIP and checksum from **Actions > Build > Artifacts**.
+2. Make sure the tag refers to the tested commit, then push an actual Git tag **before creating a draft**:
 
-To build assets for an **already published Release** (including a Release whose first build failed), commit the updated workflow to `main`, then open **Actions > Release > Run workflow**. Select branch `main`, enter the exact existing release tag (such as `0.1.0`), and run it. The workflow checks out that tag, verifies its application version, and uploads ZIP plus SHA-256 to the **existing** Release. Do not delete or republish the Release. A normal workflow **Re-run jobs** on the old failing run uses its original workflow revision, so use the new manual dispatch instead.
+   ```cmd
+   git tag 0.1.1
+   git push origin 0.1.1
+   ```
+
+   Use `v0.1.1` instead only if you consistently prefer the `v` prefix. Do not reuse `0.1.0` after deleting an immutable release with that tag.
+3. Open **Releases > Draft a new release**; **choose the existing** `0.1.1` tag, fill in the title and notes, and click **Save draft** (NOT **Publish release**).
+4. Open **Actions > Release > Run workflow**. Select branch `main` and enter the exact existing draft tag `0.1.1`.
+5. Confirm the workflow is green. Open the draft again and check its Assets: `KeePassXCHelloFocus-0.1.1.zip` and `KeePassXCHelloFocus-0.1.1.zip.sha256` must both be present.
+6. Optionally download and test the assets. Only then click **Publish release**. Publishing does not trigger any build or upload.
+
+For future releases, change both `FileVersion` and `ProductVersion` in the AutoIt source to `X.Y.Z.0`, update README/changelog, and follow the same steps with a **new** tag. Never move or reuse tags associated with published immutable releases.
 
 ## SHA-256 release integrity
 

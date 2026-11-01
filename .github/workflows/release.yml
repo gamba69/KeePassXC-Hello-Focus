@@ -1,30 +1,36 @@
 name: Release
 
+# Immutable releases must receive every asset while still drafts.
+# Publishing is deliberately a manual GitHub UI action, never a workflow trigger.
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'Tag of an existing published release (for example, 0.1.0 or v0.1.0)'
+        description: 'Existing Draft Release tag (for example, 0.1.1 or v0.1.1)'
         type: string
         required: true
 
 permissions:
   contents: write
 
+# Do not upload from two simultaneous runs to the same draft.
+concurrency:
+  group: release-draft-${{ inputs.release_tag }}
+  cancel-in-progress: false
+
 env:
-  RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
+  RELEASE_TAG: ${{ inputs.release_tag }}
 
 jobs:
   release:
     runs-on: windows-2025
     steps:
-      - name: Check out the release tag
+      - name: Check out the existing release tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.RELEASE_TAG }}
-      - name: Validate version, license and existing published release
+          ref: ${{ inputs.release_tag }}
+
+      - name: Validate version, license, and Draft Release
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -38,11 +44,17 @@ jobs:
             throw 'The MIT LICENSE file is required for a public release.'
           }
           $draft = gh release view "$env:RELEASE_TAG" --json isDraft --jq '.isDraft'
-          if ($LASTEXITCODE -ne 0) { throw "Published GitHub Release not found for tag '$env:RELEASE_TAG'." }
-          if ($draft.Trim() -ne 'false') { throw "Release '$env:RELEASE_TAG' is still a draft." }
-      - name: Compile and package release (latest stable AutoIt)
+          if ($LASTEXITCODE -ne 0) {
+            throw "Draft Release '$env:RELEASE_TAG' was not found. Create and save a draft before running this workflow."
+          }
+          if ($draft.Trim() -ne 'true') {
+            throw "Release '$env:RELEASE_TAG' is already published. Immutable releases cannot accept new assets. Create a new version and draft instead."
+          }
+
+      - name: Compile and package tagged source (latest stable AutoIt)
         shell: pwsh
         run: .\scripts\Build.ps1 -Package -Tag "v$env:VERSION"
+
       - name: Upload build diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -51,7 +63,8 @@ jobs:
           path: .build/logs/*.log
           if-no-files-found: ignore
           retention-days: 7
-      - name: Verify SHA-256 and attach ZIP plus checksum to existing GitHub Release
+
+      - name: Verify SHA-256 and attach files to Draft Release
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -67,5 +80,21 @@ jobs:
           $expectedLine = "$hash  $([System.IO.Path]::GetFileName($archive))"
           $actualLine = [System.IO.File]::ReadAllText((Resolve-Path -LiteralPath $checksum).Path).Trim()
           if ($actualLine -cne $expectedLine) { throw 'Release ZIP SHA-256 verification failed.' }
+
+          # Check the release again immediately before uploading, in case its state changed.
+          $draft = gh release view "$env:RELEASE_TAG" --json isDraft --jq '.isDraft'
+          if ($LASTEXITCODE -ne 0 -or $draft.Trim() -ne 'true') {
+            throw "Release '$env:RELEASE_TAG' is no longer a draft. Files were not uploaded."
+          }
           gh release upload "$env:RELEASE_TAG" "$archive" "$checksum" --clobber
-          if ($LASTEXITCODE -ne 0) { throw "GitHub Release asset upload failed ($LASTEXITCODE)." }
+          if ($LASTEXITCODE -ne 0) { throw "Draft Release asset upload failed ($LASTEXITCODE)." }
+
+          # Report success only if GitHub can see both uploaded assets.
+          $assetsJson = gh release view "$env:RELEASE_TAG" --json assets
+          if ($LASTEXITCODE -ne 0) { throw 'Could not verify uploaded Release assets.' }
+          $assetNames = @(($assetsJson | ConvertFrom-Json).assets | ForEach-Object { $_.name })
+          foreach ($file in @($archive, $checksum)) {
+            $fileName = [System.IO.Path]::GetFileName($file)
+            if ($fileName -cnotin $assetNames) { throw "Release asset is missing after upload: $fileName" }
+          }
+          "Draft Release '$env:RELEASE_TAG' has both validated assets. Review the draft and click Publish release manually." >> $env:GITHUB_STEP_SUMMARY

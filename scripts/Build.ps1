@@ -1,5 +1,5 @@
 # Build KeePassXC Hello Focus with an explicit AutoIt compiler and icon.
-# Example: .\scripts\Build.ps1 -Package -Tag v0.1.0
+# Example: .\scripts\Build.ps1 -Package -Tag v0.1.1
 [CmdletBinding()]
 param(
     [switch]$Package,
