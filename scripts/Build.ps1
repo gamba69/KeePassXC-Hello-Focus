@@ -195,5 +195,22 @@ if ($Package) {
     # Package the exact flat distribution file list, with no staging folder.
     $archive = Join-Path $dist "$name-$semver.zip"
     Compress-Archive -LiteralPath $releaseFiles -DestinationPath $archive -CompressionLevel Optimal
+    if (-not (Test-Path -LiteralPath $archive -PathType Leaf) -or (Get-Item -LiteralPath $archive).Length -eq 0) {
+        throw "Release archive was not created or is empty: $archive"
+    }
+
+    # Hash the final ZIP bytes (never the pre-packaged EXE or an intermediate file).
+    # GNU sha256sum-compatible format: <64 lowercase hex digits><two spaces><filename>.
+    # The checksum is intentionally OUTSIDE the archive; it must not change the ZIP bytes.
+    $digest = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($digest -notmatch '^[0-9a-f]{64}$') { throw 'Invalid SHA-256 checksum generated.' }
+    $checksumPath = "$archive.sha256"
+    $checksumLine = "$digest  $([System.IO.Path]::GetFileName($archive))"
+    [System.IO.File]::WriteAllText($checksumPath, "$checksumLine`n", [System.Text.UTF8Encoding]::new($false))
+    if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant() -cne $digest) {
+        throw 'Release ZIP changed while calculating its checksum.'
+    }
     Write-Host "Release archive: $archive"
+    Write-Host "SHA-256:         $digest"
+    Write-Host "Checksum file:   $checksumPath"
 }

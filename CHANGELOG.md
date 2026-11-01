@@ -5,6 +5,10 @@ This project uses `MAJOR.MINOR.PATCH` release versions. The executable stores th
 ## Unreleased
 
 ### Changed
+- Publish a `.zip.sha256` checksum next to the final versioned ZIP in local `dist/`, GitHub Actions Artifacts, and GitHub Releases; verify the checksum before CI publication.
+- Document SHA-256 download verification and Windows SmartScreen/Mark-of-the-Web behavior without disabling Windows security features.
+- Download test-build Artifacts as a single versioned distribution ZIP using `actions/upload-artifact@v7` with `archive: false` (no nested ZIP).
+- Document public Authenticode signing options and the sign-before-package requirement; signing is not enabled until a verified identity is selected.
 - Name distribution ZIPs and GitHub Actions artifacts `KeePassXCHelloFocus-X.Y.Z` using the version already declared in the AutoIt source. Release assets retain the matching versioned filename.
 - Publish test-build ZIPs as GitHub Actions artifacts on push, pull requests, and manual `Run workflow` (14-day retention).
 - Build and attach the distribution ZIP to an existing GitHub Release when it is **published**, instead of creating a release on tag push.

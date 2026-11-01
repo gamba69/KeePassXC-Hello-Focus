@@ -39,6 +39,7 @@ CI builds produce these outputs:
 - `README.md` — end-user information.
 - `LICENSE` — MIT license; always included.
 - `KeePassXCHelloFocus-X.Y.Z.zip` — versioned archive of the above distribution files, without including itself. The version is taken from the AutoIt source metadata.
+- `KeePassXCHelloFocus-X.Y.Z.zip.sha256` — SHA-256 of the **final ZIP**, outside that ZIP; one lowercase hexadecimal digest and filename, compatible with `sha256sum -c`.
 
 The lower-level `scripts/Build.ps1` command without `-Package` prepares the
 same flat distribution files but does not create the ZIP. `Compile.cmd`
@@ -67,7 +68,7 @@ Two independent workflows are included. Both use the same `scripts/Build.ps1 -Pa
 
 `.github/workflows/build.yml` runs automatically on pushes to `main` and pull requests. It also supports **Actions > Build > Run workflow** for manually requested builds (select the branch and click **Run workflow**).
 
-After a **successful** run, open **Actions > Build > the completed run > Artifacts** and download the versioned `KeePassXCHelloFocus-X.Y.Z` artifact. GitHub wraps the uploaded file in an artifact download; inside is the generated `KeePassXCHelloFocus-X.Y.Z.zip`. That ZIP contains `KeePassXCHelloFocus.exe`, `README.md`, and `LICENSE`.
+After a **successful** run, open **Actions > Build > the completed run > Artifacts** and download **both** `KeePassXCHelloFocus-X.Y.Z.zip` and `KeePassXCHelloFocus-X.Y.Z.zip.sha256`. Each is a separate artifact without an extra ZIP wrapper. `actions/upload-artifact@v7` with `archive: false` only supports one file per upload. The ZIP contains `KeePassXCHelloFocus.exe`, `README.md`, and `LICENSE`; the checksum is generated and verified against its final bytes before upload.
 
 Test builds **do not create or modify GitHub Releases**. Build artifacts are retained for 14 days. If compilation fails, the run is marked failed and available diagnostic logs are uploaded as the `build-diagnostics` artifact for 7 days. No successful build ZIP is generated on a failed run.
 
@@ -81,11 +82,11 @@ When you click **Publish release**, the workflow:
 2. Verifies that the tag has the form `vMAJOR.MINOR.PATCH` and that `LICENSE` is present.
 3. Downloads the latest stable AutoIt and compiles the program from the tagged source.
 4. Checks that the tag matches the AutoIt source version and that the compiled EXE has the required version and fingerprint icon.
-5. Creates `dist/KeePassXCHelloFocus-X.Y.Z.zip` and **attaches it to the Release that was just published** using `gh release upload`.
+5. Creates `dist/KeePassXCHelloFocus-X.Y.Z.zip`, computes and verifies `dist/KeePassXCHelloFocus-X.Y.Z.zip.sha256`, and **attaches both files to the Release that was just published** using `gh release upload`.
 
 The workflow does **not** create a second Release, overwrite release notes, or edit the title. It does not replace an existing asset with the same filename; if you already uploaded such a file, remove it before publication or the upload step will fail.
 
-The Release becomes public immediately when published, while compilation and uploading happen afterward. The ZIP will appear under **Assets** once the workflow succeeds. Check **Actions > Release** if the asset is missing.
+The Release becomes public immediately when published, while compilation and uploading happen afterward. The ZIP and `.zip.sha256` file will appear under **Assets** once the workflow succeeds. Check **Actions > Release** if either file is missing.
 
 **Important:** GitHub requires the `release.yml` workflow to exist on the repository's default branch before a Release is published. Publish the updated source to `main` first. Workflow permissions must allow GitHub Actions to run; `release.yml` requests `contents: write` for uploading its asset.
 
@@ -96,11 +97,23 @@ The Release becomes public immediately when published, while compilation and upl
 3. Open **Releases > Draft a new release** (or edit an existing draft).
 4. Choose or create tag `v0.1.0` pointing to the tested commit. Set the release title and description.
 5. Click **Publish release**. This triggers the `Release` workflow.
-6. Open **Actions > Release** to confirm success, then check that the Release contains `KeePassXCHelloFocus-0.1.0.zip` under **Assets** (or the matching version for another release).
+6. Open **Actions > Release** to confirm success, then check that the Release contains `KeePassXCHelloFocus-0.1.0.zip` **and** `KeePassXCHelloFocus-0.1.0.zip.sha256` under **Assets** (or the matching version for another release).
 
 If the tag uses another version (for example, `v0.1.1`), update both `FileVersion` and `ProductVersion` pragmas in the `.au3` source to `0.1.1.0` before tagging. Also update the changelog and the version shown in README.
 
 If a Release was already published *before* the new workflow was committed to the default branch, this event cannot be retroactively triggered by saving its draft or editing the text. For future releases, use the workflow above.
+
+## SHA-256 release integrity
+
+The build calculates SHA-256 only after creating the complete versioned ZIP. It writes `KeePassXCHelloFocus-X.Y.Z.zip.sha256` in GNU `sha256sum` format, **outside** the ZIP, and verifies the digest again in GitHub Actions before publishing. Rebuilding the same source later may produce different bytes because the latest stable AutoIt is downloaded for every build; each published checksum corresponds to the **specific uploaded archive**, not to all releases sharing a version string.
+
+On Windows, use the PowerShell verification commands in [README.md](../README.md#download-verification-and-windows-smartscreen). On Linux/macOS with GNU coreutils, use `sha256sum -c KeePassXCHelloFocus-X.Y.Z.zip.sha256`. Download the ZIP and checksum from the same build or Release. Checksums detect unexpected file changes but do not authenticate the publisher when obtained from the same website; a trusted Authenticode signature is a separate mechanism.
+
+## Code signing
+
+The current workflow does not sign the executable. A GitHub-hosted build does not automatically produce a publicly trusted Authenticode signature. Before adding signing, the project maintainer must obtain a signing identity and choose a compatible service or certificate. Signing must happen **after compilation but before packaging**; do not modify the EXE after signing.
+
+See [Code signing](SIGNING.md) for options and commands. An untrusted self-signed certificate is unsuitable for public SmartScreen reputation.
 
 ## Build repeatability
 

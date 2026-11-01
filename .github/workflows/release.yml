@@ -39,7 +39,7 @@ jobs:
           path: .build/logs/*.log
           if-no-files-found: ignore
           retention-days: 7
-      - name: Attach ZIP to existing GitHub Release
+      - name: Verify SHA-256 and attach ZIP plus checksum to existing GitHub Release
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -47,8 +47,15 @@ jobs:
         run: |
           $version = $env:RELEASE_TAG.Substring(1)
           $archive = ".\dist\KeePassXCHelloFocus-$version.zip"
-          if (-not (Test-Path -LiteralPath $archive -PathType Leaf)) {
-            throw "Expected versioned release archive not found: $archive"
+          $checksum = "$archive.sha256"
+          foreach ($file in @($archive, $checksum)) {
+            if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
+              throw "Expected release file not found: $file"
+            }
           }
-          gh release upload "$env:RELEASE_TAG" "$archive"
+          $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          $expectedLine = "$hash  $([System.IO.Path]::GetFileName($archive))"
+          $actualLine = [System.IO.File]::ReadAllText((Resolve-Path -LiteralPath $checksum).Path).Trim()
+          if ($actualLine -cne $expectedLine) { throw 'Release ZIP SHA-256 verification failed.' }
+          gh release upload "$env:RELEASE_TAG" "$archive" "$checksum"
           if ($LASTEXITCODE -ne 0) { throw "GitHub Release asset upload failed ($LASTEXITCODE)." }

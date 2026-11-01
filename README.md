@@ -20,9 +20,10 @@ KeePassXC Hello Focus is a small, independent Windows tray utility that brings W
 ## Download and run
 
 1. Open the repository's **Releases** section once the first release is published.
-2. Download `KeePassXCHelloFocus-X.Y.Z.zip` (for example, `KeePassXCHelloFocus-0.1.0.zip`) and extract it.
-3. Run `KeePassXCHelloFocus.exe`.
-4. Right-click its tray icon to open **About...** or select **Exit**.
+2. Download `KeePassXCHelloFocus-X.Y.Z.zip` (for example, `KeePassXCHelloFocus-0.1.0.zip`) and its matching `.zip.sha256` checksum file.
+3. Verify the ZIP checksum (see [Download verification](#download-verification-and-windows-smartscreen)), then extract it.
+4. Run `KeePassXCHelloFocus.exe`.
+5. Right-click its tray icon to open **About...** or select **Exit**.
 
 The release EXE is standalone. AutoIt and Python are **not required** on the target computer. No installer or administrator privileges are requested. A second launch silently exits.
 
@@ -36,15 +37,37 @@ The downloaded AutoIt runtime's Authenticode signature is verified before compil
 
 - Run `Compile.cmd` in the repository root.
 - Or run `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build.ps1 -Package`.
-- Find the clean distribution set (`.exe`, `README.md`, `LICENSE`) and the versioned `KeePassXCHelloFocus-X.Y.Z.zip` in `dist/`. Both `Compile.cmd` and GitHub Actions create the ZIP.
+- Find the clean distribution set (`.exe`, `README.md`, `LICENSE`), versioned ZIP, and its `.zip.sha256` checksum in `dist/`. Both `Compile.cmd` and GitHub Actions create the ZIP and checksum.
 
 Build validation checks executable version metadata and the embedded fingerprint icon. The compiler receives explicit `/out`, `/icon`, `/x64`, and `/nopack` options. Output placement and executable icon are controlled by the build script, not duplicated with `#pragma compile(Out, ...)` or `#pragma compile(Icon, ...)`. The locally downloaded `.tools/` folder is not committed to Git.
 
 ## GitHub Actions builds
 
-For a testable build without publishing a Release, open **Actions > Build > Run workflow**. After the run succeeds, download the versioned `KeePassXCHelloFocus-X.Y.Z` artifact under **Artifacts**; it contains the matching versioned distribution ZIP. Builds also run on pushes to `main` and pull requests. Build artifacts are retained for 14 days.
+For a testable build without publishing a Release, open **Actions > Build > Run workflow**. After the run succeeds, download **two separate files** under **Artifacts**: `KeePassXCHelloFocus-X.Y.Z.zip` and `KeePassXCHelloFocus-X.Y.Z.zip.sha256`. Neither download has an extra ZIP wrapper. Builds also run on pushes to `main` and pull requests; artifacts are retained for 14 days.
 
-To create a public download, create a draft Release with a version tag (for example, `v0.1.0`) and then click **Publish release**. The separate `Release` workflow builds the tagged source and attaches `KeePassXCHelloFocus-X.Y.Z.zip` to that existing Release. Saving a draft does not trigger compilation; the ZIP appears under **Assets** after the published-release workflow finishes successfully. See the [build and release guide](docs/BUILD.md).
+To create a public download, create a draft Release with a version tag (for example, `v0.1.0`) and then click **Publish release**. The `Release` workflow builds the tagged source, computes SHA-256 **after** creating the final ZIP, verifies the checksum, and attaches **both files** to that Release. Saving a draft does not trigger compilation. See the [build and release guide](docs/BUILD.md).
+
+## Download verification and Windows SmartScreen
+
+Check the checksum before running a downloaded build. From PowerShell in the directory containing **both** downloaded files (replace `0.1.0` with your version):
+
+```powershell
+$zip = '.\KeePassXCHelloFocus-0.1.0.zip'
+$expected = ((Get-Content -LiteralPath "$zip.sha256" -Raw).Trim() -split '\s+')[0]
+$actual = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash
+if ($actual -ine $expected) { throw 'SHA-256 mismatch: do not run this download.' }
+'ZIP checksum verified.'
+```
+
+On macOS/Linux, run `sha256sum -c KeePassXCHelloFocus-0.1.0.zip.sha256` where available. The checksum is a file integrity check, **not a digital signature**. A checksum hosted beside the download cannot independently prove who published it.
+
+Windows SmartScreen may warn about a newly downloaded, unsigned EXE because it has not yet established a reputation. This is not necessarily a malware finding, and checking a SHA-256 does **not** make the file trusted by SmartScreen. After confirming the source and checksum, if you choose to trust the download, Windows users can remove the Internet-origin mark from the **ZIP before extracting** it:
+
+```powershell
+Unblock-File -LiteralPath '.\KeePassXCHelloFocus-0.1.0.zip'
+```
+
+This affects only the selected local file, not other downloads or future versions; it does not disable SmartScreen globally or sign the application. Windows may still display a security warning depending on reputation and system policy. See [Security](docs/SECURITY.md) and [Code signing](docs/SIGNING.md).
 
 ## Limitations
 
@@ -58,6 +81,7 @@ To create a public download, create a draft Release with a version tag (for exam
 
 - [Technical specification](docs/SPECIFICATION.md)
 - [Build and release guide](docs/BUILD.md)
+- [Code signing guide](docs/SIGNING.md)
 - [Manual acceptance tests](docs/TESTING.md)
 - [Security and scope](docs/SECURITY.md)
 - [License details](docs/LICENSING.md)
