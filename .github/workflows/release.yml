@@ -45,4 +45,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          gh release upload "$env:RELEASE_TAG" '.\dist\KeePassXCHelloFocus.zip'
+          $version = $env:RELEASE_TAG.Substring(1)
+          $archive = ".\dist\KeePassXCHelloFocus-$version.zip"
+          if (-not (Test-Path -LiteralPath $archive -PathType Leaf)) {
+            throw "Expected versioned release archive not found: $archive"
+          }
+          gh release upload "$env:RELEASE_TAG" "$archive"
+          if ($LASTEXITCODE -ne 0) { throw "GitHub Release asset upload failed ($LASTEXITCODE)." }

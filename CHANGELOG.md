@@ -5,6 +5,7 @@ This project uses `MAJOR.MINOR.PATCH` release versions. The executable stores th
 ## Unreleased
 
 ### Changed
+- Name distribution ZIPs and GitHub Actions artifacts `KeePassXCHelloFocus-X.Y.Z` using the version already declared in the AutoIt source. Release assets retain the matching versioned filename.
 - Publish test-build ZIPs as GitHub Actions artifacts on push, pull requests, and manual `Run workflow` (14-day retention).
 - Build and attach the distribution ZIP to an existing GitHub Release when it is **published**, instead of creating a release on tag push.
 - Document how to test builds before publishing and where to find successful ZIPs and failure logs.

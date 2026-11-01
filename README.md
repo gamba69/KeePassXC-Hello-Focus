@@ -20,7 +20,7 @@ KeePassXC Hello Focus is a small, independent Windows tray utility that brings W
 ## Download and run
 
 1. Open the repository's **Releases** section once the first release is published.
-2. Download `KeePassXCHelloFocus.zip` and extract it.
+2. Download `KeePassXCHelloFocus-X.Y.Z.zip` (for example, `KeePassXCHelloFocus-0.1.0.zip`) and extract it.
 3. Run `KeePassXCHelloFocus.exe`.
 4. Right-click its tray icon to open **About...** or select **Exit**.
 
@@ -36,15 +36,15 @@ The downloaded AutoIt runtime's Authenticode signature is verified before compil
 
 - Run `Compile.cmd` in the repository root.
 - Or run `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build.ps1 -Package`.
-- Find the clean distribution set (`.exe`, `README.md`, `LICENSE`) and the ZIP in `dist/`. Both `Compile.cmd` and GitHub Actions create the ZIP.
+- Find the clean distribution set (`.exe`, `README.md`, `LICENSE`) and the versioned `KeePassXCHelloFocus-X.Y.Z.zip` in `dist/`. Both `Compile.cmd` and GitHub Actions create the ZIP.
 
 Build validation checks executable version metadata and the embedded fingerprint icon. The compiler receives explicit `/out`, `/icon`, `/x64`, and `/nopack` options. Output placement and executable icon are controlled by the build script, not duplicated with `#pragma compile(Out, ...)` or `#pragma compile(Icon, ...)`. The locally downloaded `.tools/` folder is not committed to Git.
 
 ## GitHub Actions builds
 
-For a testable build without publishing a Release, open **Actions > Build > Run workflow**. After the run succeeds, download `KeePassXCHelloFocus` under **Artifacts**; it contains the distribution ZIP. Builds also run on pushes to `main` and pull requests. Build artifacts are retained for 14 days.
+For a testable build without publishing a Release, open **Actions > Build > Run workflow**. After the run succeeds, download the versioned `KeePassXCHelloFocus-X.Y.Z` artifact under **Artifacts**; it contains the matching versioned distribution ZIP. Builds also run on pushes to `main` and pull requests. Build artifacts are retained for 14 days.
 
-To create a public download, create a draft Release with a version tag (for example, `v0.1.0`) and then click **Publish release**. The separate `Release` workflow builds the tagged source and attaches `KeePassXCHelloFocus.zip` to that existing Release. Saving a draft does not trigger compilation; the ZIP appears under **Assets** after the published-release workflow finishes successfully. See the [build and release guide](docs/BUILD.md).
+To create a public download, create a draft Release with a version tag (for example, `v0.1.0`) and then click **Publish release**. The separate `Release` workflow builds the tagged source and attaches `KeePassXCHelloFocus-X.Y.Z.zip` to that existing Release. Saving a draft does not trigger compilation; the ZIP appears under **Assets** after the published-release workflow finishes successfully. See the [build and release guide](docs/BUILD.md).
 
 ## Limitations
 

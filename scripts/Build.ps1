@@ -193,7 +193,7 @@ Write-Host "Distribution files are ready in: $dist"
 
 if ($Package) {
     # Package the exact flat distribution file list, with no staging folder.
-    $archive = Join-Path $dist "$name.zip"
+    $archive = Join-Path $dist "$name-$semver.zip"
     Compress-Archive -LiteralPath $releaseFiles -DestinationPath $archive -CompressionLevel Optimal
     Write-Host "Release archive: $archive"
 }

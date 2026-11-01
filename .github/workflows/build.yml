@@ -16,8 +16,14 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
       - name: Compile and package (download latest stable AutoIt)
+        id: package
         shell: pwsh
-        run: .\scripts\Build.ps1 -Package
+        run: |
+          .\scripts\Build.ps1 -Package
+          $archives = @(Get-ChildItem -LiteralPath 'dist' -File -Filter 'KeePassXCHelloFocus-*.zip')
+          if ($archives.Count -ne 1) { throw "Expected one versioned ZIP, found $($archives.Count)." }
+          "archive_name=$($archives[0].BaseName)" >> $env:GITHUB_OUTPUT
+          "archive_file=$($archives[0].Name)" >> $env:GITHUB_OUTPUT
       - name: Upload build diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -29,12 +35,12 @@ jobs:
       - name: Upload testable ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: KeePassXCHelloFocus
-          path: dist/KeePassXCHelloFocus.zip
+          name: ${{ steps.package.outputs.archive_name }}
+          path: dist/${{ steps.package.outputs.archive_file }}
           if-no-files-found: error
           retention-days: 14
       - name: Explain where to download the build
         shell: pwsh
         run: |
-          'Build completed. Download the KeePassXCHelloFocus artifact from this run (Actions > Build > run > Artifacts).' >> $env:GITHUB_STEP_SUMMARY
-          'The artifact contains KeePassXCHelloFocus.zip with the EXE, README.md and LICENSE.' >> $env:GITHUB_STEP_SUMMARY
+          'Build completed. Download the ${{ steps.package.outputs.archive_name }} artifact from this run (Actions > Build > run > Artifacts).' >> $env:GITHUB_STEP_SUMMARY
+          'The artifact contains ${{ steps.package.outputs.archive_file }} with the EXE, README.md and LICENSE.' >> $env:GITHUB_STEP_SUMMARY

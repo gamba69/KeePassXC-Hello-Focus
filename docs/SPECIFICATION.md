@@ -106,7 +106,7 @@ Windows theme-change messages are handled by setting a flag and applying the UI 
 
 - Product name in EXE metadata: `KeePassXC Hello Focus`.
 - Output name: `KeePassXCHelloFocus.exe` (no version suffix).
-- Release ZIP name: `KeePassXCHelloFocus.zip` (no version suffix).
+- Release ZIP name: `KeePassXCHelloFocus-X.Y.Z.zip`, where `X.Y.Z` is the application version from `FileVersion`/`ProductVersion` (for example, `0.1.0`).
 - `FileVersion` and `ProductVersion`: `0.1.0.0` for tag `v0.1.0`.
 - `#pragma compile(FileVersion, ...)` is the authoritative version declaration; runtime About reads it from the compiled EXE.
 - Each build downloads and verifies a fresh copy of the latest stable portable AutoIt from the official rolling URL; installed and cached compilers are never used. Compilation uses explicit `/icon`, `/x64`, and `/nopack` arguments.

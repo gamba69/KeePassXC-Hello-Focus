@@ -38,7 +38,7 @@ CI builds produce these outputs:
 - `KeePassXCHelloFocus.exe` — standalone 64-bit Windows application.
 - `README.md` — end-user information.
 - `LICENSE` — MIT license; always included.
-- `KeePassXCHelloFocus.zip` — archive of the above distribution files, without including itself.
+- `KeePassXCHelloFocus-X.Y.Z.zip` — versioned archive of the above distribution files, without including itself. The version is taken from the AutoIt source metadata.
 
 The lower-level `scripts/Build.ps1` command without `-Package` prepares the
 same flat distribution files but does not create the ZIP. `Compile.cmd`
@@ -67,7 +67,7 @@ Two independent workflows are included. Both use the same `scripts/Build.ps1 -Pa
 
 `.github/workflows/build.yml` runs automatically on pushes to `main` and pull requests. It also supports **Actions > Build > Run workflow** for manually requested builds (select the branch and click **Run workflow**).
 
-After a **successful** run, open **Actions > Build > the completed run > Artifacts** and download the `KeePassXCHelloFocus` artifact. GitHub wraps the uploaded file in an artifact download; inside is the generated `KeePassXCHelloFocus.zip`. That ZIP contains `KeePassXCHelloFocus.exe`, `README.md`, and `LICENSE`.
+After a **successful** run, open **Actions > Build > the completed run > Artifacts** and download the versioned `KeePassXCHelloFocus-X.Y.Z` artifact. GitHub wraps the uploaded file in an artifact download; inside is the generated `KeePassXCHelloFocus-X.Y.Z.zip`. That ZIP contains `KeePassXCHelloFocus.exe`, `README.md`, and `LICENSE`.
 
 Test builds **do not create or modify GitHub Releases**. Build artifacts are retained for 14 days. If compilation fails, the run is marked failed and available diagnostic logs are uploaded as the `build-diagnostics` artifact for 7 days. No successful build ZIP is generated on a failed run.
 
@@ -81,7 +81,7 @@ When you click **Publish release**, the workflow:
 2. Verifies that the tag has the form `vMAJOR.MINOR.PATCH` and that `LICENSE` is present.
 3. Downloads the latest stable AutoIt and compiles the program from the tagged source.
 4. Checks that the tag matches the AutoIt source version and that the compiled EXE has the required version and fingerprint icon.
-5. Creates `dist/KeePassXCHelloFocus.zip` and **attaches it to the Release that was just published** using `gh release upload`.
+5. Creates `dist/KeePassXCHelloFocus-X.Y.Z.zip` and **attaches it to the Release that was just published** using `gh release upload`.
 
 The workflow does **not** create a second Release, overwrite release notes, or edit the title. It does not replace an existing asset with the same filename; if you already uploaded such a file, remove it before publication or the upload step will fail.
 
@@ -96,7 +96,7 @@ The Release becomes public immediately when published, while compilation and upl
 3. Open **Releases > Draft a new release** (or edit an existing draft).
 4. Choose or create tag `v0.1.0` pointing to the tested commit. Set the release title and description.
 5. Click **Publish release**. This triggers the `Release` workflow.
-6. Open **Actions > Release** to confirm success, then check that the Release contains `KeePassXCHelloFocus.zip` under **Assets**.
+6. Open **Actions > Release** to confirm success, then check that the Release contains `KeePassXCHelloFocus-0.1.0.zip` under **Assets** (or the matching version for another release).
 
 If the tag uses another version (for example, `v0.1.1`), update both `FileVersion` and `ProductVersion` pragmas in the `.au3` source to `0.1.1.0` before tagging. Also update the changelog and the version shown in README.
 
