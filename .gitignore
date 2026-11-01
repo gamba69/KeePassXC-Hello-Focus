@@ -1,0 +1,16 @@
+# Build outputs
+/.tools/
+/.build/
+/dist/
+*.exe
+*.a3x
+*.obj
+*.log
+# Local editor settings
+.vs/
+.vscode/
+.idea/
+# OS-generated files
+Thumbs.db
+Desktop.ini
+.DS_Store

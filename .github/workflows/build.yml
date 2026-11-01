@@ -1,0 +1,30 @@
+name: Build
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-2025
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Compile and package (download latest stable AutoIt)
+        shell: pwsh
+        run: .\scripts\Build.ps1 -Package
+      - name: Upload build diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-diagnostics
+          path: .build/logs/*.log
+          if-no-files-found: ignore
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KeePassXCHelloFocus
+          path: dist/KeePassXCHelloFocus.zip
+          if-no-files-found: error

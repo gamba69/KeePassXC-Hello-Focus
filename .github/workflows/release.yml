@@ -1,0 +1,35 @@
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: windows-2025
+    steps:
+      - name: Check out tag
+        uses: actions/checkout@v4
+      - name: Verify publishing prerequisites
+        shell: pwsh
+        run: |
+          if (-not (Test-Path LICENSE)) {
+            throw 'A LICENSE file must be selected and added before a public release.'
+          }
+      - name: Compile and validate tagged build (download latest stable AutoIt)
+        shell: pwsh
+        run: .\scripts\Build.ps1 -Package -Tag "$env:GITHUB_REF_NAME"
+      - name: Upload build diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-diagnostics
+          path: .build/logs/*.log
+          if-no-files-found: ignore
+      - name: Publish ZIP on GitHub Releases
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$env:GITHUB_REF_NAME" ".\dist\KeePassXCHelloFocus.zip" --verify-tag --generate-notes --title "$env:GITHUB_REF_NAME"
